@@ -10,6 +10,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import axios from "axios";
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+
 
 interface Pharmacy {
   id: string;
@@ -215,27 +217,79 @@ export function PharmacyFinder() {
             <CardDescription>
               We need your location to show pharmacies within 4km of your position.
             </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button 
-              onClick={requestLocationPermission} 
-              className="w-full" 
-              size="lg"
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <span className="mr-2">Locating...</span>
-                  <Skeleton className="h-4 w-4 rounded-full animate-pulse" />
-                </>
-              ) : (
-                <>
-                  <MapPin className="mr-2 h-4 w-4" />
-                  {userLocation ? "Refresh Location" : "Share My Location"}
-                </>
-              )}
-            </Button>
+            <CardContent>
+            <div className="flex flex-col gap-4">
+              <Button 
+                onClick={requestLocationPermission} 
+                className="w-full" 
+                size="lg"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <span className="mr-2">Locating...</span>
+                    <Skeleton className="h-4 w-4 rounded-full animate-pulse" />
+                  </>
+                ) : (
+                  <>
+                    <MapPin className="mr-2 h-4 w-4" />
+                    {userLocation ? "Refresh Location" : "Share My Location"}
+                  </>
+                )}
+              </Button>
+
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="w-full" size="lg">
+                    <MapPin className="mr-2 h-4 w-4" />
+                    View All Pharmacies
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>All On-Duty Pharmacies</DialogTitle>
+                    <DialogDescription>
+                      List of all available pharmacies in our database
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    {mockPharmacies.map((pharmacy) => (
+                      <Card key={pharmacy.id}>
+                        <CardHeader>
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <CardTitle>{pharmacy.name}</CardTitle>
+                              <CardDescription className="flex items-center mt-1">
+                                <MapPin className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
+                                {pharmacy.address}
+                              </CardDescription>
+                            </div>
+                            <Badge variant={pharmacy.isOpen ? "default" : "outline"}>
+                              {pharmacy.isOpen ? "Open" : "Closed"}
+                            </Badge>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="flex items-center">
+                              <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                              <span>{pharmacy.phone}</span>
+                            </div>
+                            <div className="flex items-center">
+                              <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
+                              <span>{pharmacy.hours}</span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
           </CardContent>
+          </CardHeader>
+          
         </Card>
 
         {loading ? (
@@ -325,8 +379,9 @@ export function PharmacyFinder() {
             <CardHeader>
               <CardTitle>No Pharmacies Found</CardTitle>
               <CardDescription>
-                We couldn't find any on-duty pharmacies within 4km of your location.
+                We couldn't find any on-duty pharmacies within 40km of your location.
               </CardDescription>
+              
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">Try expanding your search radius or check again later.</p>
