@@ -1,0 +1,20 @@
+services:
+  findpharma:
+    build: .
+    command: pm2-runtime ecosystem.config.js
+    
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.findpharma.rule=Host(`findpharma.cimeit.tech`)
+      - traefik.http.services.findpharma.loadbalancer.server.port=3000
+      - traefik.http.routers.findpharma.tls=true
+      - "traefik.http.routers.findpharma.entrypoints=websecure"
+      - "traefik.http.routers.findpharma.tls.certresolver=letsencrypt"
+    networks:
+      - traefik
+    restart: unless-stopped
+
+
+networks:
+  traefik:
+    external: true
