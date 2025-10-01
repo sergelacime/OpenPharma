@@ -1,0 +1,4 @@
+requests==2.32.3
+beautifulsoup4==4.13.3
+geopy==2.4.1
+certifi==2025.1.31

@@ -13,8 +13,12 @@ function runPythonScript() {
   return new Promise((resolve, reject) => {
     console.log('Démarrage de la mise à jour des pharmacies...');
     
+    // Détecter si on est dans Docker ou en local
+    const isDocker = process.env.NODE_ENV === 'production' || fs.existsSync('/.dockerenv');
+    const pythonCommand = isDocker ? 'python-venv' : 'python3';
+    
     // Exécuter le script Python
-    const pythonProcess = spawn('python3', [PYTHON_SCRIPT_PATH], {
+    const pythonProcess = spawn(pythonCommand, [PYTHON_SCRIPT_PATH], {
       cwd: path.dirname(PYTHON_SCRIPT_PATH),
       stdio: ['pipe', 'pipe', 'pipe']
     });
