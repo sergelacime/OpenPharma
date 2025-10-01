@@ -1,7 +1,7 @@
 services:
   findpharma:
     build: .
-    command: pm2-runtime ecosystem.config.js
+    command: /app/scripts/init.sh
     volumes:
       - logs:/app/logs
     environment:
