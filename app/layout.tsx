@@ -8,8 +8,11 @@ import Footer from "@/components/Footer";
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Pharmacy Locator',
-  description: 'Find nearby pharmacies on duty',
+  title: 'Localisateur de Pharmacies CimeIT',
+  description: 'Trouvez les pharmacies de garde près de vous au Togo',
+  keywords: 'pharmacie, garde, Togo, Lomé, santé, médicaments',
+  authors: [{ name: 'CimeIT' }],
+  viewport: 'width=device-width, initial-scale=1',
 };
 
 export default function RootLayout({
@@ -18,13 +21,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} flex flex-col min-h-screen m-4`}>
+    <html lang="fr" suppressHydrationWarning>
+      <body className={`${inter.className} flex flex-col min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <div className="flex-grow">
-            {children}
+            <div className="min-h-screen">
+              {children}
+            </div>
           </div>
-          <Footer /> {/* Ajoutez le composant Footer ici */}
+          <Footer />
           <Toaster />
         </ThemeProvider>
       </body>

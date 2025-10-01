@@ -9,8 +9,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import axios from "axios";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { PharmacyMap } from "./pharmacy-map";
+import pharmaciesData from "../pharmacies_geo.json";
 
 
 interface Pharmacy {
@@ -25,59 +26,6 @@ interface Pharmacy {
   longitude: number;
 }
 
-// Mock pharmacy data
-const mockPharmacies = [
-  {
-    id: "1",
-    name: "Pharmacie Saint Joseph",
-    address: "Rue de la Paix, Lomé",
-    phone: "+228 22 21 20 19",
-    hours: "8:00 AM - 8:00 PM",
-    isOpen: true,
-    latitude: 6.1304,
-    longitude: 1.2158
-  },
-  {
-    id: "2",
-    name: "Pharmacie du Grand Marché",
-    address: "Grand Marché, Lomé",
-    phone: "+228 22 21 22 23",
-    hours: "7:30 AM - 9:00 PM",
-    isOpen: true,
-    latitude: 6.1285,
-    longitude: 1.2203
-  },
-  {
-    id: "3",
-    name: "Pharmacie Tokoin",
-    address: "Tokoin, Lomé",
-    phone: "+228 22 21 24 25",
-    hours: "8:00 AM - 7:00 PM",
-    isOpen: false,
-    latitude: 6.1350,
-    longitude: 1.2100
-  },
-  {
-    id: "4",
-    name: "Pharmacie de l'Indépendance",
-    address: "Avenue de l'Indépendance, Lomé",
-    phone: "+228 22 21 26 27",
-    hours: "24/7",
-    isOpen: true,
-    latitude: 6.1256,
-    longitude: 1.2250
-  },
-  {
-    id: "5",
-    name: "Pharmacie de la Caisse",
-    address: "Rue des Banques, Lomé",
-    phone: "+228 22 21 28 29",
-    hours: "8:30 AM - 8:30 PM",
-    isOpen: false,
-    latitude: 6.1320,
-    longitude: 1.2180
-  }
-];
 
 // Calculate distance between two coordinates using Haversine formula
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -102,13 +50,16 @@ export function PharmacyFinder() {
   const { toast } = useToast();
 
 
-  const handlegetpharmacy = async ()=>{
-    const response = await axios.get("http://pharma-api.lami9315.odns.fr/api/pharmacies/");
-    return response.data;
-  }
-
   useEffect(() => {
-    handlegetpharmacy().then(setMockPharmacies);
+    // Charger les données des pharmacies depuis le fichier JSON local
+    // Ajouter les propriétés manquantes pour la compatibilité
+    const pharmaciesWithDefaults = pharmaciesData.map(pharmacy => ({
+      ...pharmacy,
+      hours: "-", // Heures par défaut
+      isOpen: true, // Par défaut ouvert
+      distance: 0 // Distance par défaut, sera calculée plus tard
+    }));
+    setMockPharmacies(pharmaciesWithDefaults);
   }, []);
 
   
@@ -194,90 +145,118 @@ export function PharmacyFinder() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold tracking-tight mb-2">CimeIT Pharmacy Locator</h1>
-          <p className="text-muted-foreground">Find on-duty pharmacies near you within a 4km radius</p>
-          <p>{userLocation?.latitude}</p>
-          <p>{userLocation?.longitude}</p>
+        <div className="text-center mb-8 animate-fade-in-up">
+          <h1 className="text-4xl font-bold tracking-tight mb-3 gradient-text">
+            Localisateur de Pharmacies CimeIT
+          </h1>
+          <p className="text-lg text-muted-foreground mb-2">
+            Trouvez les pharmacies de garde près de vous dans un rayon de 40km
+          </p>
+          <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <MapPin className="h-4 w-4" />
+              <span>Géolocalisation</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Clock className="h-4 w-4" />
+              <span>Mise à jour quotidienne</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Phone className="h-4 w-4" />
+              <span>Contact direct</span>
+            </div>
+          </div>
         </div>
 
         {permissionDenied && (
           <Alert variant="destructive" className="mb-6">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Location access denied</AlertTitle>
+            <AlertTitle>Accès à la localisation refusé</AlertTitle>
             <AlertDescription>
-              Please enable location services in your browser settings to use this feature.
+              Veuillez activer les services de localisation dans les paramètres de votre navigateur pour utiliser cette fonctionnalité.
             </AlertDescription>
           </Alert>
         )}
 
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Find Nearby Pharmacies</CardTitle>
-            <CardDescription>
-              We need your location to show pharmacies within 4km of your position.
+        <Card className="mb-8 shadow-lg border-0 bg-gradient-to-br from-blue-50 to-green-50 dark:from-blue-950/20 dark:to-green-950/20">
+          <CardHeader className="text-center pb-4">
+            <CardTitle className="text-2xl font-bold text-gray-800 dark:text-gray-200">
+              Trouver les Pharmacies Proches
+            </CardTitle>
+            <CardDescription className="text-base text-gray-600 dark:text-gray-400">
+              Nous avons besoin de votre localisation pour afficher les pharmacies dans un rayon de 40km de votre position.
             </CardDescription>
-            <CardContent>
+          </CardHeader>
+          <CardContent className="pt-0">
             <div className="flex flex-col gap-4">
               <Button 
                 onClick={requestLocationPermission} 
-                className="w-full" 
+                className="w-full h-12 text-lg font-semibold btn-gradient text-white shadow-lg hover:shadow-xl transition-all duration-300" 
                 size="lg"
                 disabled={loading}
               >
                 {loading ? (
                   <>
-                    <span className="mr-2">Locating...</span>
+                    <span className="mr-2">Localisation en cours...</span>
                     <Skeleton className="h-4 w-4 rounded-full animate-pulse" />
                   </>
                 ) : (
                   <>
-                    <MapPin className="mr-2 h-4 w-4" />
-                    {userLocation ? "Refresh Location" : "Share My Location"}
+                    <MapPin className="mr-2 h-5 w-5" />
+                    {userLocation ? "Actualiser la Position" : "Partager Ma Position"}
                   </>
                 )}
               </Button>
 
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button variant="outline" className="w-full" size="lg">
-                    <MapPin className="mr-2 h-4 w-4" />
-                    View All Pharmacies
+                  <Button variant="outline" className="w-full h-12 text-lg font-semibold border-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300">
+                    <MapPin className="mr-2 h-5 w-5" />
+                    Voir Toutes les Pharmacies
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-h-[80vh] overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle>All On-Duty Pharmacies</DialogTitle>
-                    <DialogDescription>
-                      List of all available pharmacies in our database
+                    <DialogTitle className="text-xl font-bold">Toutes les Pharmacies de Garde</DialogTitle>
+                    <DialogDescription className="text-base">
+                      Liste de toutes les pharmacies disponibles dans notre base de données
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4">
                     {mockPharmacies.map((pharmacy) => (
-                      <Card key={pharmacy.id}>
-                        <CardHeader>
+                      <Card key={pharmacy.id} className="hover:shadow-md transition-shadow duration-200">
+                        <CardHeader className="pb-3">
                           <div className="flex justify-between items-start">
-                            <div>
-                              <CardTitle>{pharmacy.name}</CardTitle>
-                              <CardDescription className="flex items-center mt-1">
-                                <MapPin className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
-                                {pharmacy.address}
+                            <div className="flex-1">
+                              <CardTitle className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                                {pharmacy.name}
+                              </CardTitle>
+                              <CardDescription className="flex items-center mt-2">
+                                <MapPin className="h-4 w-4 mr-2 text-muted-foreground flex-shrink-0" />
+                                <span className="text-sm">{pharmacy.address}</span>
                               </CardDescription>
                             </div>
-                            <Badge variant={pharmacy.isOpen ? "default" : "outline"}>
-                              {pharmacy.isOpen ? "Open" : "Closed"}
+                            <Badge 
+                              variant={pharmacy.isOpen ? "default" : "outline"}
+                              className={`text-xs font-medium ${
+                                pharmacy.isOpen 
+                                  ? "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800" 
+                                  : "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
+                              }`}
+                            >
+                              {pharmacy.isOpen ? "Ouvert" : "Fermé"}
                             </Badge>
                           </div>
                         </CardHeader>
-                        <CardContent>
-                          <div className="grid grid-cols-2 gap-4">
+                        <CardContent className="pt-0">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div className="flex items-center">
-                              <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                              <span>{pharmacy.phone}</span>
+                              <Phone className="h-4 w-4 mr-2 text-muted-foreground flex-shrink-0" />
+                              <span className="text-sm font-medium">{pharmacy.phone}</span>
                             </div>
                             <div className="flex items-center">
-                              <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
-                              <span>{pharmacy.hours}</span>
+                              <Clock className="h-4 w-4 mr-2 text-muted-foreground flex-shrink-0" />
+                              <span className="text-sm font-medium">{pharmacy.hours}</span>
                             </div>
                           </div>
                         </CardContent>
@@ -288,14 +267,20 @@ export function PharmacyFinder() {
               </Dialog>
             </div>
           </CardContent>
-          </CardHeader>
-          
         </Card>
 
         {loading ? (
           <div className="space-y-4">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2">
+                Recherche en cours...
+              </h2>
+              <p className="text-muted-foreground">
+                Nous cherchons les pharmacies les plus proches de vous
+              </p>
+            </div>
             {[1, 2, 3].map((i) => (
-              <Card key={i}>
+              <Card key={i} className="animate-pulse">
                 <CardHeader>
                   <Skeleton className="h-6 w-3/4 mb-2" />
                   <Skeleton className="h-4 w-1/2" />
@@ -310,52 +295,91 @@ export function PharmacyFinder() {
             ))}
           </div>
         ) : pharmacies.length > 0 ? (
-          <Tabs defaultValue="list" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="list">List View</TabsTrigger>
-              <TabsTrigger value="map">Map View</TabsTrigger>
-            </TabsList>
+          <div className="space-y-6">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2">
+                Pharmacies Trouvées
+              </h2>
+              <p className="text-muted-foreground">
+                {pharmacies.length} pharmacie{pharmacies.length > 1 ? 's' : ''} trouvée{pharmacies.length > 1 ? 's' : ''} dans un rayon de 40km
+              </p>
+            </div>
+            <Tabs defaultValue="list" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-6 bg-gray-100 dark:bg-gray-800">
+                <TabsTrigger value="list" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700">
+                  <MapPin className="h-4 w-4 mr-2" />
+                  Vue Liste
+                </TabsTrigger>
+                <TabsTrigger value="map" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700">
+                  <MapPin className="h-4 w-4 mr-2" />
+                  Vue Carte
+                </TabsTrigger>
+              </TabsList>
             
             <TabsContent value="list" className="space-y-4">
-              {pharmacies.map((pharmacy) => (
-                <Card key={pharmacy.id}>
-                  <CardHeader>
+              {pharmacies.map((pharmacy, index) => (
+                <Card key={pharmacy.id} className="pharmacy-card hover:shadow-lg transition-all duration-300 border-l-4 border-l-blue-500">
+                  <CardHeader className="pb-3">
                     <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle>{pharmacy.name}</CardTitle>
-                        <CardDescription className="flex items-center mt-1">
-                          <MapPin className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
-                          {pharmacy.address}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded-full dark:bg-blue-900/20 dark:text-blue-400">
+                            #{index + 1}
+                          </span>
+                          <CardTitle className="text-xl font-bold text-gray-800 dark:text-gray-200">
+                            {pharmacy.name}
+                          </CardTitle>
+                        </div>
+                        <CardDescription className="flex items-start mt-2">
+                          <MapPin className="h-4 w-4 mr-2 text-muted-foreground flex-shrink-0 mt-0.5" />
+                          <span className="text-sm text-gray-600 dark:text-gray-400">{pharmacy.address}</span>
                         </CardDescription>
                       </div>
-                      <Badge variant={pharmacy.isOpen ? "default" : "outline"}>
-                        {pharmacy.isOpen ? "Open" : "Closed"}
+                      <Badge 
+                        variant={pharmacy.isOpen ? "default" : "outline"}
+                        className={`text-xs font-medium ${
+                          pharmacy.isOpen 
+                            ? "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800" 
+                            : "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
+                        }`}
+                      >
+                        {pharmacy.isOpen ? "Ouvert" : "Fermé"}
                       </Badge>
                     </div>
                   </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="flex items-center">
-                        <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <span>{pharmacy.phone}</span>
+                  <CardContent className="pt-0">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="flex items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <Phone className="h-5 w-5 mr-3 text-blue-600 dark:text-blue-400" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">Téléphone</p>
+                          <span className="text-sm font-semibold">{pharmacy.phone}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center">
-                        <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <span>{pharmacy.hours}</span>
+                      <div className="flex items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <Clock className="h-5 w-5 mr-3 text-green-600 dark:text-green-400" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">Horaires</p>
+                          <span className="text-sm font-semibold">{pharmacy.hours}</span>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
-                  <CardFooter className="flex justify-between">
-                    <div className="text-sm text-muted-foreground">
-                      {pharmacy.distance.toFixed(1)} km away
+                  <CardFooter className="flex justify-between items-center pt-4 border-t border-gray-100 dark:border-gray-700">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <span className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+                        {pharmacy.distance.toFixed(1)} km
+                      </span>
                     </div>
                     <Button 
                       variant="outline" 
                       size="sm" 
                       onClick={() => getDirections(pharmacy.latitude, pharmacy.longitude)}
+                      className="hover:bg-blue-50 hover:border-blue-300 dark:hover:bg-blue-900/20 dark:hover:border-blue-700 transition-all duration-200"
                     >
                       <Navigation className="h-4 w-4 mr-2" />
-                      Directions
+                      Itinéraire
                     </Button>
                   </CardFooter>
                 </Card>
@@ -363,28 +387,46 @@ export function PharmacyFinder() {
             </TabsContent>
             
             <TabsContent value="map">
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="bg-muted rounded-md h-[400px] flex items-center justify-center">
-                    <p className="text-muted-foreground">
-                      Map view will be implemented with a mapping library like Google Maps or Leaflet
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+              <PharmacyMap 
+                pharmacies={pharmacies} 
+                userLocation={userLocation} 
+              />
             </TabsContent>
-          </Tabs>
+            </Tabs>
+          </div>
         ) : userLocation ? (
-          <Card>
+          <Card className="text-center py-12 bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20 border-orange-200 dark:border-orange-800">
             <CardHeader>
-              <CardTitle>No Pharmacies Found</CardTitle>
-              <CardDescription>
-                We couldn't find any on-duty pharmacies within 40km of your location.
+              <div className="mx-auto w-16 h-16 bg-orange-100 dark:bg-orange-900/20 rounded-full flex items-center justify-center mb-4">
+                <AlertCircle className="h-8 w-8 text-orange-600 dark:text-orange-400" />
+              </div>
+              <CardTitle className="text-2xl font-bold text-gray-800 dark:text-gray-200">
+                Aucune Pharmacie Trouvée
+              </CardTitle>
+              <CardDescription className="text-lg text-gray-600 dark:text-gray-400">
+                Nous n'avons trouvé aucune pharmacie de garde dans un rayon de 40km de votre position.
               </CardDescription>
-              
             </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">Try expanding your search radius or check again later.</p>
+            <CardContent className="pt-4">
+              <p className="text-muted-foreground mb-4">
+                Essayez d'élargir votre zone de recherche ou vérifiez à nouveau plus tard.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button 
+                  onClick={requestLocationPermission}
+                  variant="outline"
+                  className="hover:bg-orange-50 hover:border-orange-300 dark:hover:bg-orange-900/20"
+                >
+                  <MapPin className="h-4 w-4 mr-2" />
+                  Actualiser la Recherche
+                </Button>
+                <Button 
+                  onClick={() => setUserLocation(null)}
+                  variant="ghost"
+                >
+                  Changer de Position
+                </Button>
+              </div>
             </CardContent>
           </Card>
         ) : null}
