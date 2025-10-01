@@ -2,6 +2,8 @@ services:
   findpharma:
     build: .
     command: pm2-runtime ecosystem.config.js
+    volumes:
+      - ./pharmacies_geo.json:/app/pharmacies_geo.json
     
     labels:
       - traefik.enable=true

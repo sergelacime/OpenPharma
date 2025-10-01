@@ -12,6 +12,7 @@ COPY --chown=node:node ecosystem.config.js ./
 
 # Install dependencies
 RUN pnpm install 
+RUN pip3 install requests beautifulsoup4 geopy certifi
 
 # Copy the rest of the application
 COPY --chown=node:node . .
