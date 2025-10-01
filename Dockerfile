@@ -48,6 +48,9 @@ RUN echo '#!/bin/bash\n/app/venv/bin/python3 "$@"' > /usr/local/bin/python-venv 
 RUN sed -i 's/python3/python-venv/g' scripts/run-once.js
 RUN sed -i 's/python3/python-venv/g' scripts/update-pharmacies.js
 
+# Créer le dossier de logs et définir les permissions
+RUN mkdir -p /app/logs && chown node:node /app/logs
+
 # Rendre le script d'initialisation exécutable
 RUN chmod +x scripts/init.sh
 

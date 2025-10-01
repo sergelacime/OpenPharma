@@ -4,6 +4,7 @@ echo "🚀 Initialisation de Find Pharma..."
 
 # Créer le répertoire de logs s'il n'existe pas
 mkdir -p /app/logs
+chmod 755 /app/logs
 
 # Vérifier si le fichier de données existe
 if [ ! -f "/app/pharmacies_geo.json" ]; then

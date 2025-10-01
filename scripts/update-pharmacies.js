@@ -11,7 +11,11 @@ const LOG_FILE_PATH = path.join(__dirname, '..', 'logs', 'pharmacy-update.log');
 // Créer le dossier logs s'il n'existe pas
 const logsDir = path.dirname(LOG_FILE_PATH);
 if (!fs.existsSync(logsDir)) {
-  fs.mkdirSync(logsDir, { recursive: true });
+  try {
+    fs.mkdirSync(logsDir, { recursive: true, mode: 0o755 });
+  } catch (error) {
+    console.error('Erreur lors de la création du dossier logs:', error.message);
+  }
 }
 
 // Fonction pour logger les événements
@@ -21,8 +25,12 @@ function log(message) {
   
   console.log(logMessage.trim());
   
-  // Écrire dans le fichier de log
-  fs.appendFileSync(LOG_FILE_PATH, logMessage);
+  // Écrire dans le fichier de log (avec gestion d'erreur)
+  try {
+    fs.appendFileSync(LOG_FILE_PATH, logMessage);
+  } catch (error) {
+    console.error('Erreur lors de l\'écriture du log:', error.message);
+  }
 }
 
 // Fonction pour exécuter le script Python
