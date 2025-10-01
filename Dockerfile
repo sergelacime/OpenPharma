@@ -22,6 +22,9 @@ COPY --chown=node:node ecosystem.config.js ./
 # Installer les dépendances Node.js
 RUN npm install
 
+# Installer PM2 globalement
+RUN yarn global add npm@latest pnpm pm2
+
 # Copier le script Python et créer l'environnement virtuel
 COPY --chown=node:node find_pharma.py ./
 COPY --chown=node:node requirements.txt ./
