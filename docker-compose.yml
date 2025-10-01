@@ -3,7 +3,6 @@ services:
     build: .
     command: pm2-runtime ecosystem.config.js
     volumes:
-      - pharmacies_geo.json:/app/pharmacies_geo.json
       - logs:/app/logs
     environment:
       - NODE_ENV=production
@@ -21,8 +20,6 @@ services:
 
 
 volumes:
-  pharmacies_geo.json:
-    driver: local
   logs:
     driver: local
 
